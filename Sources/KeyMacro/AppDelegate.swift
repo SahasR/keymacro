@@ -8,17 +8,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     var menuBarController: MenuBarController!
     private var settingsWindow: NSWindow?
     private var onboardingWindow: NSWindow?
+    private var accessibilityTimer: Timer?
+    private var wasAccessibilityTrusted = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         store = MacroStore()
         hotKeyManager = HotKeyManager(store: store)
         menuBarController = MenuBarController(store: store, appDelegate: self)
+        MacroEngine.shared.store = store
 
         if !AccessibilityChecker.isTrusted {
             showOnboarding()
         } else {
             hotKeyManager.registerAll()
+            wasAccessibilityTrusted = true
+        }
+        startAccessibilityWatcher()
+    }
+
+    private func startAccessibilityWatcher() {
+        accessibilityTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            let trusted = AccessibilityChecker.isTrusted
+            if self.wasAccessibilityTrusted && !trusted {
+                self.hotKeyManager.unregisterAll()
+                let alert = NSAlert()
+                alert.messageText = "Accessibility Access Revoked"
+                alert.informativeText = "KeyMacro's Accessibility permission was removed. Hotkeys are disabled until access is restored.\n\nRe-enable in System Settings → Privacy & Security → Accessibility."
+                alert.addButton(withTitle: "Open Settings")
+                alert.addButton(withTitle: "Later")
+                if alert.runModal() == .alertFirstButtonReturn {
+                    AccessibilityChecker.openSystemPreferences()
+                }
+            } else if !self.wasAccessibilityTrusted && trusted {
+                self.hotKeyManager.registerAll()
+            }
+            self.wasAccessibilityTrusted = trusted
         }
     }
 
@@ -74,6 +100,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 DispatchQueue.main.async {
                     self?.onboardingWindow?.close()
                     self?.hotKeyManager.registerAll()
+                    self?.wasAccessibilityTrusted = true
                 }
             }))
             onboardingWindow = w

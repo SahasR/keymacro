@@ -11,6 +11,12 @@ struct MacrosPane: View {
                     MacroRow(macro: macro)
                         .tag(macro.id)
                         .contextMenu {
+                            Button {
+                                store.duplicate(macro)
+                            } label: {
+                                Label("Duplicate", systemImage: "plus.square.on.square")
+                            }
+                            Divider()
                             Button(role: .destructive) {
                                 if selectedID == macro.id { selectedID = nil }
                                 store.delete(macro)
@@ -43,12 +49,29 @@ struct MacrosPane: View {
                 .buttonStyle(.borderless)
                 .disabled(selectedID == nil)
                 Spacer()
+                Button {
+                    store.importMacros()
+                } label: {
+                    Image(systemName: "square.and.arrow.down")
+                        .frame(width: 28, height: 24)
+                }
+                .buttonStyle(.borderless)
+                .help("Import Macros from JSON")
+                Button {
+                    store.exportMacros()
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                        .frame(width: 28, height: 24)
+                }
+                .buttonStyle(.borderless)
+                .help("Export Macros to JSON")
             }
             .padding(.horizontal, 4)
             .padding(.vertical, 2)
         } detail: {
             if let id = selectedID, let idx = store.macros.firstIndex(where: { $0.id == id }) {
                 MacroEditor(macro: $store.macros[idx])
+                    .environmentObject(store)
             } else {
                 Text("Select a macro to edit")
                     .foregroundColor(.secondary)
@@ -75,10 +98,22 @@ struct MacroRow: View {
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(macro.name).fontWeight(.medium)
+                HStack(spacing: 4) {
+                    Text(macro.name).fontWeight(.medium)
+                    if store.conflictingMacro(for: macro) != nil {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.caption2)
+                            .foregroundColor(.orange)
+                    }
+                }
                 Text(macro.hotKey.displayString)
                     .font(.caption)
                     .foregroundColor(.secondary)
+                if let lastRun = macro.lastRun {
+                    Text(lastRun, style: .relative)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
             }
             Spacer()
             Toggle("", isOn: Binding(

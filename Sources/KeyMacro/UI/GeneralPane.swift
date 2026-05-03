@@ -9,8 +9,6 @@ struct GeneralPane: View {
             Section("Startup") {
                 Toggle("Launch at login", isOn: $store.launchAtLogin)
                     .onChange(of: store.launchAtLogin) { val in
-                        // ServiceManagement requires a helper app or SMAppService (macOS 13+)
-                        // For now, open Login Items system preference
                         if val {
                             NSWorkspace.shared.open(
                                 URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.Extension")!
@@ -31,13 +29,19 @@ struct GeneralPane: View {
                     .font(.caption).foregroundColor(.secondary)
             }
             Section("Permissions") {
-                HStack {
-                    Label("Accessibility Access", systemImage: AccessibilityChecker.isTrusted ? "checkmark.shield.fill" : "shield.slash.fill")
-                        .foregroundColor(AccessibilityChecker.isTrusted ? .green : .red)
-                    Spacer()
-                    if !AccessibilityChecker.isTrusted {
-                        Button("Grant Access") { AccessibilityChecker.openSystemPreferences() }
-                            .buttonStyle(.borderedProminent)
+                TimelineView(.periodic(from: .now, by: 2.0)) { _ in
+                    let trusted = AccessibilityChecker.isTrusted
+                    HStack {
+                        Label(
+                            trusted ? "Accessibility Access granted" : "Accessibility Access not granted",
+                            systemImage: trusted ? "checkmark.shield.fill" : "shield.slash.fill"
+                        )
+                        .foregroundColor(trusted ? .green : .red)
+                        Spacer()
+                        if !trusted {
+                            Button("Grant Access") { AccessibilityChecker.openSystemPreferences() }
+                                .buttonStyle(.borderedProminent)
+                        }
                     }
                 }
             }

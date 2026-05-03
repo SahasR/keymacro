@@ -21,37 +21,45 @@ struct ActionStepRow: View {
 
     @ViewBuilder private var stepIcon: some View {
         switch step {
-        case .typeText: Image(systemName: "character.cursor.ibeam").font(.caption)
-        case .paste:    Image(systemName: "doc.on.clipboard").font(.caption)
-        case .pressKey: Image(systemName: "return").font(.caption)
-        case .delay:    Image(systemName: "clock").font(.caption)
-        case .shell:    Image(systemName: "terminal").font(.caption)
+        case .typeText:     Image(systemName: "character.cursor.ibeam").font(.caption)
+        case .paste:        Image(systemName: "doc.on.clipboard").font(.caption)
+        case .pressKey:     Image(systemName: "return").font(.caption)
+        case .delay:        Image(systemName: "clock").font(.caption)
+        case .shell:        Image(systemName: "terminal").font(.caption)
+        case .openURL:      Image(systemName: "link").font(.caption)
+        case .setClipboard: Image(systemName: "clipboard").font(.caption)
         }
     }
 
     private var iconBackground: Color {
         switch step {
-        case .typeText: return .blue.opacity(0.15)
-        case .paste:    return .purple.opacity(0.15)
-        case .pressKey: return .green.opacity(0.15)
-        case .delay:    return .orange.opacity(0.15)
-        case .shell:    return .gray.opacity(0.15)
+        case .typeText:     return .blue.opacity(0.15)
+        case .paste:        return .purple.opacity(0.15)
+        case .pressKey:     return .green.opacity(0.15)
+        case .delay:        return .orange.opacity(0.15)
+        case .shell:        return .gray.opacity(0.15)
+        case .openURL:      return .teal.opacity(0.15)
+        case .setClipboard: return .indigo.opacity(0.15)
         }
     }
 
     @ViewBuilder private var stepEditor: some View {
         switch step {
         case .typeText(var d):
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Type Text").font(.caption).foregroundColor(.secondary)
                 TextField("Text to type\u{2026}", text: Binding(get: { d.text }, set: { d.text = $0; step = .typeText(d) }))
                     .textFieldStyle(.roundedBorder)
+                Text("Variables: {{clipboard}}  {{date}}  {{time}}  {{iso}}")
+                    .font(.caption2).foregroundColor(.secondary)
             }
         case .paste(var d):
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Paste Text").font(.caption).foregroundColor(.secondary)
                 TextField("Text to paste\u{2026}", text: Binding(get: { d.text }, set: { d.text = $0; step = .paste(d) }))
                     .textFieldStyle(.roundedBorder)
+                Text("Variables: {{clipboard}}  {{date}}  {{time}}  {{iso}}")
+                    .font(.caption2).foregroundColor(.secondary)
             }
         case .pressKey(let d):
             VStack(alignment: .leading) {
@@ -66,12 +74,32 @@ struct ActionStepRow: View {
                 Text("ms")
             }
         case .shell(var d):
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Shell Command").font(.caption).foregroundColor(.secondary)
                 TextField("command\u{2026}", text: Binding(get: { d.command }, set: { d.command = $0; step = .shell(d) }))
                     .textFieldStyle(.roundedBorder).font(.system(.body, design: .monospaced))
                 Toggle("Type stdout into focused app", isOn: Binding(get: { d.captureOutputAsType }, set: { d.captureOutputAsType = $0; step = .shell(d) }))
                     .font(.caption)
+                Toggle("Abort macro if command fails (non-zero exit)", isOn: Binding(get: { d.abortOnError }, set: { d.abortOnError = $0; step = .shell(d) }))
+                    .font(.caption)
+                Text("Variables: {{clipboard}}  {{date}}  {{time}}  {{iso}}")
+                    .font(.caption2).foregroundColor(.secondary)
+            }
+        case .openURL(var d):
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Open URL or App").font(.caption).foregroundColor(.secondary)
+                TextField("https://example.com or /Applications/Xcode.app", text: Binding(get: { d.url }, set: { d.url = $0; step = .openURL(d) }))
+                    .textFieldStyle(.roundedBorder)
+                Text("Variables: {{clipboard}}  {{date}}  {{time}}  {{iso}}")
+                    .font(.caption2).foregroundColor(.secondary)
+            }
+        case .setClipboard(var d):
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Set Clipboard").font(.caption).foregroundColor(.secondary)
+                TextField("Text to copy to clipboard\u{2026}", text: Binding(get: { d.text }, set: { d.text = $0; step = .setClipboard(d) }))
+                    .textFieldStyle(.roundedBorder)
+                Text("Variables: {{clipboard}}  {{date}}  {{time}}  {{iso}}")
+                    .font(.caption2).foregroundColor(.secondary)
             }
         }
     }

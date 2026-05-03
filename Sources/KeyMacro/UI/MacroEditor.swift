@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MacroEditor: View {
     @Binding var macro: Macro
+    @EnvironmentObject var store: MacroStore
 
     var body: some View {
         Form {
@@ -9,6 +10,11 @@ struct MacroEditor: View {
                 TextField("Name", text: $macro.name)
                 HotKeyRecorder(hotKey: $macro.hotKey)
                     .labelsHidden()
+                if let conflict = store.conflictingMacro(for: macro) {
+                    Label("Conflicts with \"\(conflict.name)\"", systemImage: "exclamationmark.triangle.fill")
+                        .foregroundColor(.orange)
+                        .font(.caption)
+                }
             }
             Section("Steps") {
                 ForEach($macro.steps) { $step in
@@ -19,11 +25,14 @@ struct MacroEditor: View {
                 .onMove { src, dst in macro.steps.move(fromOffsets: src, toOffset: dst) }
 
                 Menu("+ Add Step") {
-                    Button("Type Text") { macro.steps.append(.typeText(.init(text: ""))) }
-                    Button("Paste Text") { macro.steps.append(.paste(.init(text: ""))) }
-                    Button("Press Key") { macro.steps.append(.pressKey(.init(keyCode: 36, modifiers: 0))) }
-                    Button("Delay") { macro.steps.append(.delay(.init(milliseconds: 200))) }
-                    Button("Run Shell Command") { macro.steps.append(.shell(.init(command: "", captureOutputAsType: false))) }
+                    Button("Type Text")         { macro.steps.append(.typeText(.init(text: ""))) }
+                    Button("Paste Text")         { macro.steps.append(.paste(.init(text: ""))) }
+                    Button("Press Key")          { macro.steps.append(.pressKey(.init(keyCode: 36, modifiers: 0))) }
+                    Button("Delay")              { macro.steps.append(.delay(.init(milliseconds: 200))) }
+                    Button("Run Shell Command")  { macro.steps.append(.shell(.init(command: "", captureOutputAsType: false))) }
+                    Divider()
+                    Button("Open URL / App")     { macro.steps.append(.openURL(.init(url: ""))) }
+                    Button("Set Clipboard")      { macro.steps.append(.setClipboard(.init(text: ""))) }
                 }
                 .menuStyle(.borderlessButton)
                 .frame(maxWidth: 120)

@@ -10,6 +10,8 @@ final class HotKeyManager {
     private var idToMacroID: [UInt32: UUID] = [:]
     private var _nextID: UInt32 = 1
 
+    var hasRegisteredHotKeys: Bool { !registeredRefs.isEmpty }
+
     init(store: MacroStore) {
         self.store = store
         installEventHandler()
@@ -25,6 +27,11 @@ final class HotKeyManager {
         }
     }
 
+    func unregisterAll() {
+        for ref in registeredRefs.values { UnregisterEventHotKey(ref) }
+        registeredRefs.removeAll()
+    }
+
     private func register(_ macro: Macro) {
         let hk = macro.hotKey
         let idVal = hotKeyIDMap[macro.id] ?? nextID()
@@ -35,11 +42,6 @@ final class HotKeyManager {
         RegisterEventHotKey(hk.keyCode, hk.modifiers, hotKeyID,
                             GetApplicationEventTarget(), 0, &ref)
         if let ref = ref { registeredRefs[macro.id] = ref }
-    }
-
-    private func unregisterAll() {
-        for ref in registeredRefs.values { UnregisterEventHotKey(ref) }
-        registeredRefs.removeAll()
     }
 
     private func nextID() -> UInt32 { defer { _nextID += 1 }; return _nextID }

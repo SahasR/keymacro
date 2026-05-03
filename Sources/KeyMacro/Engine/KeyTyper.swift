@@ -2,7 +2,7 @@ import CoreGraphics
 import AppKit
 
 enum KeyTyper {
-    static func typeString(_ text: String) {
+    static func typeString(_ text: String, charDelayUs: UInt32 = 8_000) {
         let src = CGEventSource(stateID: .combinedSessionState)
         for scalar in text.unicodeScalars {
             var ch = UniChar(scalar.value)
@@ -11,9 +11,9 @@ enum KeyTyper {
             dn?.keyboardSetUnicodeString(stringLength: 1, unicodeString: &ch)
             up?.keyboardSetUnicodeString(stringLength: 1, unicodeString: &ch)
             dn?.post(tap: .cghidEventTap)
-            usleep(8_000)
+            usleep(charDelayUs)
             up?.post(tap: .cghidEventTap)
-            usleep(8_000)
+            usleep(charDelayUs)
         }
     }
 

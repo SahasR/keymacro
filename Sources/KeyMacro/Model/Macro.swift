@@ -6,10 +6,11 @@ struct Macro: Identifiable, Codable {
     var enabled: Bool
     var hotKey: HotKey
     var steps: [ActionStep]
+    var lastRun: Date?
 
-    init(id: UUID = UUID(), name: String, enabled: Bool = true, hotKey: HotKey, steps: [ActionStep]) {
+    init(id: UUID = UUID(), name: String, enabled: Bool = true, hotKey: HotKey, steps: [ActionStep], lastRun: Date? = nil) {
         self.id = id; self.name = name; self.enabled = enabled
-        self.hotKey = hotKey; self.steps = steps
+        self.hotKey = hotKey; self.steps = steps; self.lastRun = lastRun
     }
 }
 
